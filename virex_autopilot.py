@@ -99,27 +99,64 @@ def write_script(hook, angle):
     return parse_json(raw)[0]["script"]
 
 def generate_voice(script, out_path):
+    import time, shutil
     log("Generating voiceover...")
-    try:
-        client = Client(HF_VOICE_URL)
-        result = client.predict(script, VOICE, 0, 0, api_name="/predict")
-        if result and os.path.exists(result):
-            import shutil; shutil.copy(result, out_path)
-            log("  Voiceover done")
-            return True
-    except Exception as e: log(f"  Voice error: {e}")
+    # Wake up sleeping HF Space
+    space_url = f"https://{HF_VOICE_URL.replace('/', '-')}.hf.space"
+    for i in range(3):
+        try: requests.get(space_url, timeout=30); break
+        except: time.sleep(10)
+    time.sleep(8)
+    for attempt in range(3):
+        try:
+            client = Client(HF_VOICE_URL, verbose=False)
+            result = client.predict(script, VOICE, 0, 0, api_name="/predict")
+            # Handle different return types across Gradio versions
+            if isinstance(result, dict):
+                file_path = result.get("path") or result.get("name")
+            elif isinstance(result, tuple):
+                file_path = result[0]
+            else:
+                file_path = str(result)
+            if file_path and os.path.exists(file_path):
+                shutil.copy(file_path, out_path)
+                log("  Voiceover done ✓")
+                return True
+            else:
+                log(f"  File not found at: {file_path}")
+        except Exception as e:
+            log(f"  Voice attempt {attempt+1} failed: {e}")
+            time.sleep(15)
     return False
 
 def generate_video(script, audio_path, out_path):
+    import time, shutil
     log("Assembling video...")
-    try:
-        client = Client(HF_VIDEO_URL)
-        result = client.predict(script, audio_path, PEXELS_API_KEY, api_name="/predict")
-        if result and os.path.exists(result):
-            import shutil; shutil.copy(result, out_path)
-            log("  Video done")
-            return True
-    except Exception as e: log(f"  Video error: {e}")
+    # Wake up sleeping HF Space
+    space_url = f"https://{HF_VIDEO_URL.replace('/', '-')}.hf.space"
+    for i in range(3):
+        try: requests.get(space_url, timeout=30); break
+        except: time.sleep(10)
+    time.sleep(8)
+    for attempt in range(3):
+        try:
+            client = Client(HF_VIDEO_URL, verbose=False)
+            result = client.predict(script, audio_path, PEXELS_API_KEY, api_name="/predict")
+            if isinstance(result, dict):
+                file_path = result.get("path") or result.get("name")
+            elif isinstance(result, tuple):
+                file_path = result[0]
+            else:
+                file_path = str(result)
+            if file_path and os.path.exists(file_path):
+                shutil.copy(file_path, out_path)
+                log("  Video done ✓")
+                return True
+            else:
+                log(f"  File not found at: {file_path}")
+        except Exception as e:
+            log(f"  Video attempt {attempt+1} failed: {e}")
+            time.sleep(15)
     return False
 
 def upload_for_link(file_path):
