@@ -5,9 +5,12 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 from gradio_client import Client
+import huggingface_hub
+HF_TOKEN = os.environ.get("HF_TOKEN", "")
+if HF_TOKEN:
+    huggingface_hub.login(token=HF_TOKEN)
 
 # ─── CONFIG ───────────────────────────────────
-HF_TOKEN          = os.environ.get("HF_TOKEN", "")
 GROQ_API_KEY      = os.environ.get("GROQ_API_KEY", "")
 HF_VOICE_URL      = "Vxrex/virex-voice"
 HF_VIDEO_URL      = "Vxrex/virex-video"
@@ -110,7 +113,7 @@ def generate_voice(script, out_path):
     time.sleep(8)
     for attempt in range(3):
         try:
-            client = Client(HF_VOICE_URL, hf_token=HF_TOKEN, verbose=False)
+            client = Client(HF_VOICE_URL, verbose=False)
             result = client.predict(script, VOICE, 0, 0, api_name="/predict")
             # Handle different return types across Gradio versions
             if isinstance(result, dict):
@@ -141,7 +144,7 @@ def generate_video(script, audio_path, out_path):
     time.sleep(8)
     for attempt in range(3):
         try:
-            client = Client(HF_VIDEO_URL, hf_token=HF_TOKEN, verbose=False)
+            client = Client(HF_VIDEO_URL, verbose=False)
             result = client.predict(script, audio_path, PEXELS_API_KEY, api_name="/predict")
             if isinstance(result, dict):
                 file_path = result.get("path") or result.get("name")
