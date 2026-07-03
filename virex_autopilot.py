@@ -52,9 +52,22 @@ def call_groq(prompt, max_tokens=1500):
     return res.json()["choices"][0]["message"]["content"]
 
 def parse_json(raw):
+    import re
     clean = raw.replace("```json","").replace("```","").strip()
     start, end = clean.find("["), clean.rfind("]")
-    return json.loads(clean[start:end+1])
+    if start == -1 or end == -1:
+        raise ValueError("No JSON array found")
+    json_str = clean[start:end+1]
+    # Remove control characters that break JSON parsing
+    json_str = re.sub(r'[\x00-\x1f\x7f](?!["\\/bfnrtu])', ' ', json_str)
+    # Fix unescaped newlines inside strings
+    json_str = re.sub(r'(?<!\\)\n', ' ', json_str)
+    try:
+        return json.loads(json_str)
+    except json.JSONDecodeError:
+        # Last resort: strip all non-printable characters
+        json_str = ''.join(c for c in json_str if c.isprintable() or c in ' \t')
+        return json.loads(json_str)
 
 def score_trends(headlines):
     log("Scoring trends...")
