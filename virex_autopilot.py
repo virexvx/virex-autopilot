@@ -4,7 +4,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
-from gradio_client import Client
+from gradio_client import Client, handle_file
 import huggingface_hub
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
 if HF_TOKEN:
@@ -145,7 +145,7 @@ def generate_video(script, audio_path, out_path):
     for attempt in range(3):
         try:
             client = Client(HF_VIDEO_URL, verbose=False)
-            result = client.predict(script, audio_path, PEXELS_API_KEY)
+            result = client.predict(script, handle_file(audio_path), PEXELS_API_KEY)
             if isinstance(result, dict):
                 file_path = result.get("path") or result.get("name")
             elif isinstance(result, tuple):
