@@ -114,7 +114,7 @@ def generate_voice(script, out_path):
     for attempt in range(3):
         try:
             client = Client(HF_VOICE_URL, verbose=False)
-            result = client.predict(script, VOICE, 0, 0, api_name="/predict")
+            result = client.predict(script, VOICE, 0, 0)
             # Handle different return types across Gradio versions
             if isinstance(result, dict):
                 file_path = result.get("path") or result.get("name")
@@ -145,7 +145,7 @@ def generate_video(script, audio_path, out_path):
     for attempt in range(3):
         try:
             client = Client(HF_VIDEO_URL, verbose=False)
-            result = client.predict(script, audio_path, PEXELS_API_KEY, api_name="/predict")
+            result = client.predict(script, audio_path, PEXELS_API_KEY)
             if isinstance(result, dict):
                 file_path = result.get("path") or result.get("name")
             elif isinstance(result, tuple):
